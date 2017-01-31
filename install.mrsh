@@ -1,0 +1,21 @@
+#!
+#! Creating two motes
+#!
+mote-create -n mote1
+mote-create -n mote2
+
+#!
+#! Loading the logger-11.0 assembly on both motes
+#!
+mote1 moma-load logger-11.0
+mote2 moma-load logger-11.0
+
+#!
+#! Loading the gateway on mote1
+#!
+mote1 moma-load gateway-java-1.0
+
+#!
+#! Loading the thermostat on mote2
+#!
+mote2 moma-load thermostat-java-2.0
