@@ -15,7 +15,7 @@ Assuming you have downloaded and installed Mote Runner, there are only a few mor
 3. Run `mrsh` to start the Mote Runner Shell
 4. Inside the Mote Runner Shell, call `install.mrsh`
 
-The `install.mrsh` script will build the assemblies, create motes, load all necessary assemblies onto the motes and run the simulation. You can then navigate to [http://localhost:5000/dashboard/dashboard.html] in you browser, to observe the LEDs or to take a look at the log messages in the console.
+The `install.mrsh` script will build the assemblies, create motes, load all necessary assemblies onto the motes and run the simulation. You can then navigate to [http://localhost:5000/dashboard/dashboard.html]() in you browser, to observe the LEDs or to take a look at the log messages in the console.
 
 ## Design decisions
 Since we only worked with the simulator and therefore did not have any real sensors, I somehow had to simulate temperature changes, so that calculating an average and making differently colored LEDs blink according to that average makes sense.
