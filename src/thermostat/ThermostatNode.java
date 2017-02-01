@@ -6,13 +6,6 @@ import com.ibm.iris.*;
 
 public class ThermostatNode {
 
-    //  Temperature simulation
-    private static int MOTE_PORT = 6; // Link port on Mote (8 bit)
-    private static int UDP_PAYLOAD = 7; // Payload size
-    private static byte[] buffer; // The header information for LIP message plus context info
-    private static byte sourcePort; // AsmId, i.e. port of our assembly
-    private static boolean listenerAttached; // True if we have a process on the host which is picking up packets
-
     //  Temperature sensing
     private static long INTERVAL; // Time interval in ticks for sensor read
     private static SDev temperatureSensor = new SDev(); // Temperature/humidity sensor
@@ -29,21 +22,24 @@ public class ThermostatNode {
         INTERVAL = Time.toTickSpan(Time.SECONDS, 1);
 
         //  ------------------------------------------------
-        //  Set up temperature simulation
-        Assembly.setDataHandler(new DataHandler(null) {
-            @Override
-            public int invoke(int info, byte[] data, int len) {
-                return ThermostatNode.handleLIP(info, data, len);
-            }
-        });
-        
-        //  Allocate a buffer for outgoing UDP header data and fill in source port.
-        buffer = new byte[UDP_PAYLOAD+4];
-        sourcePort = Assembly.getActiveAsmId();
-        Util.set16be(buffer, MOTE_PORT, sourcePort);
-
-        //  Not yet attached
-        listenerAttached = false;
+        //  Set up temperature sensor
+        try {
+            temperatureSensor = new SDev();
+            temperatureSensor.setReadHandler(new DevCallback(null) {
+                @Override
+                public int invoke(int flags, byte[] data, int len, int info, long time) {
+                    return ThermostatNode.onTemperatureReading(flags, data, len, info, time);
+                }
+            });
+            temperatureSensor.open(IRIS.DID_MTS400_HUMID_TEMP, null, 0, 0);
+            temperatureSensor.read(Device.ASAP, 4, 0);
+        } catch (MoteException e) {
+            // Some exception occured while opening the sensor
+            Logger.appendString(csr.s2b("Caught exception: "));
+            Logger.appendInt(e.reason);
+            Logger.flush(Mote.ERROR);
+            LED.setState(IRIS.LED_YELLOW, (byte) 1);
+        }
 
         //  ------------------------------------------------
         //  Set up radio transmission
@@ -73,37 +69,6 @@ public class ThermostatNode {
         Util.set16le(radioFrame, 7, shortAddr); // Set SRCADDR
     }
 
-    //  LIP callback on incoming UDP frames, i.e. incoming simulated temperature values
-    private static int handleLIP(int info, byte[] data, int len) {
-        //  Any message from the host will just record the sender address
-        //  and record it as destination address where to sent data to.
-        Util.copyData(data, 0, buffer, 0, MOTE_PORT); // Copy data of length MOTE_PORT into buffer
-        Util.set16be(data, UDP_PAYLOAD+0, sourcePort); // aka. data[UDP_PAYLOAD] = sourcePort
-
-        if (listenerAttached == false) {
-            listenerAttached = true;
-            try {
-                temperatureSensor = new SDev();
-                temperatureSensor.setReadHandler(new DevCallback(null) {
-                    @Override
-                    public int invoke(int flags, byte[] data, int len, int info, long time) {
-                        return ThermostatNode.onTemperatureReading(flags, data, len, info, time);
-                    }
-                });
-                temperatureSensor.open(IRIS.DID_MTS400_HUMID_TEMP, null, 0, 0);
-                temperatureSensor.read(Device.ASAP, 4, 0);
-            } catch (MoteException e) {
-                // Some exception occured while opening the sensor
-                Logger.appendString(csr.s2b("Caught exception: "));
-                Logger.appendInt(e.reason);
-                Logger.flush(Mote.ERROR);
-                LED.setState(IRIS.LED_YELLOW, (byte) 1);
-            }
-        }
-
-        return UDP_PAYLOAD+4;
-    }
-
     //  Callback on sensor read
     private static int onTemperatureReading(int dflags, byte[] ddata, int dlen, int dinfo, long dtime) {
         if (dlen != 4 || ((dflags & Device.FLAG_FAILED) != 0)) {
@@ -111,10 +76,6 @@ public class ThermostatNode {
         } else {
             LED.setState(IRIS.LED_RED, (byte) 0);
         }
-
-        //  send data out
-        Util.copyData(ddata, 0, buffer, UDP_PAYLOAD, dlen);
-        LIP.send(buffer,0,UDP_PAYLOAD+dlen);
 
         sendToGateway(ddata, dlen);
 
@@ -124,6 +85,8 @@ public class ThermostatNode {
     }
 
     private static void sendToGateway(byte[] data, int length) {
+        //  turn yellow LED on, because the node is sending data to the gateway
+        LED.setState(IRIS.LED_YELLOW, (byte) 1);
         //  set sequence number
         radioFrame[2] = (byte) sequenceNumber;
         //  set payload (Copy data of length len to position RADIO_PAYLOAD of radioFrame)

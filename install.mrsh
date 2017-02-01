@@ -17,12 +17,6 @@ mote-create -n mote2
 mote-create -n mote3
 
 #!
-#! Bind the socket
-#!
-source ./SOCK1-sock.js
-sock-bind SOCK1
-
-#!
 #! Start a feeder to simulate temperature changes
 #!
 source ./generator-feed.js
@@ -43,8 +37,3 @@ mote3 moma-load gateway-java-1.0
 #! Loading the thermostat on mote2
 #!
 mote1 mote2 moma-load thermostat-java-1.0
-
-#!
-#! Attach to the socket
-#!
-mote1 mote2 sock-send SOCK1 3 attach
