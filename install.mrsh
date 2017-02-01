@@ -1,4 +1,10 @@
 #!
+#! Compile the assemblies
+#!
+sh mrc --assembly=thermostat-java-1.0 --debug src/thermostat/ThermostatNode.java -r:logger-11.0 -r:iris-system-11.0
+sh mrc --assembly=gateway-java-1.0 --debug src/gateway/Gateway.java -r:logger-11.0
+
+#!
 #! Start simulation process
 #!
 sag-start
@@ -31,12 +37,12 @@ moma-load logger-11.0
 #!
 #! Loading the gateway on mote1
 #!
-mote3 moma-load gateway-java-2.0
+mote3 moma-load gateway-java-1.0
 
 #!
 #! Loading the thermostat on mote2
 #!
-mote1 mote2 moma-load thermostat-java-3.0
+mote1 mote2 moma-load thermostat-java-1.0
 
 #!
 #! Attach to the socket
