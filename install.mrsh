@@ -1,21 +1,44 @@
 #!
+#! Start simulation process
+#!
+sag-start
+
+#!
 #! Creating two motes
 #!
 mote-create -n mote1
 mote-create -n mote2
+mote-create -n mote3
+
+#!
+#! Bind the socket
+#!
+source ./SOCK1-sock.js
+sock-bind SOCK1
+
+#!
+#! Start a feeder to simulate temperature changes
+#!
+source ./generator-feed.js
+mote1 feed-start MTS400_HUMID_TEMP User.generatorOne
+mote2 feed-start MTS400_HUMID_TEMP User.generatorTwo
 
 #!
 #! Loading the logger-11.0 assembly on both motes
 #!
-mote1 moma-load logger-11.0
-mote2 moma-load logger-11.0
+moma-load logger-11.0
 
 #!
 #! Loading the gateway on mote1
 #!
-mote1 moma-load gateway-java-1.0
+mote3 moma-load gateway-java-2.0
 
 #!
 #! Loading the thermostat on mote2
 #!
-mote2 moma-load thermostat-java-2.0
+mote1 mote2 moma-load thermostat-java-3.0
+
+#!
+#! Attach to the socket
+#!
+mote1 mote2 sock-send SOCK1 3 attach
