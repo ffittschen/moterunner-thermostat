@@ -20,8 +20,8 @@ sock-bind SOCK1
 #! Start a feeder to simulate temperature changes
 #!
 source ./generator-feed.js
-mote1 feed-start MTS400_HUMID_TEMP User.generatorOne
-mote2 feed-start MTS400_HUMID_TEMP User.generatorTwo
+mote1 feed-start MTS400_HUMID_TEMP User.randomTemperature
+mote2 feed-start MTS400_HUMID_TEMP User.randomTemperature
 
 #!
 #! Loading the logger-11.0 assembly on both motes
